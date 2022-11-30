@@ -42,7 +42,32 @@ app.get('/note/:id', (req, res) => {
         res.status(500).send(err)
     })
 })
+app.put('/notes', (req, res) => {
+    db.updateNote(req.body).then(data => {
+        if (!data) {
+            res.status(404).send('there is no note with this id : ')
+        } else {
+            res.send(data)
+        }
 
+    }).catch(err => {
+        res.status(500).send(err)
+    })
+})
+
+app.delete('/note/:id', (req, res) => {
+    const {id} = req.params
+    db.deleteNote(id).then(data => {
+        if (!data) {
+            res.status(404).send('there is no note with this id : ', id)
+        } else {
+            res.send(data)
+        }
+
+    }).catch(err => {
+        res.status(500).send(err)
+    })
+})
 const port = 3000
 app.listen(port, () => {
     console.log(`the server has started on port : ${port}`)
