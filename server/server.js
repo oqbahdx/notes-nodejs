@@ -1,75 +1,96 @@
-const express = require('express')
-const bodyParser = require('body-parser')
-const cors = require('cors')
-const app = express()
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({extended: true}))
-app.use(cors())
-const Database = require('./Database')
-const db = new Database()
+const express = require('express');
+const cors = require('cors');
+const Database = require('./Database');
+const bodyParser = require('body-parser');
 
-app.post('/notes', (req, res) => {
+const db = new Database();
 
-    const body = req.body
-    console.log("body : ", body)
-    db.addNote(body).then(doc => {
-        res.send(doc)
-    }).catch(err => {
-        res.status(500).send(err)
-    })
+const app = express();
+const port = 3000;
 
+app.use(cors());
+app.use(bodyParser.json());
 
-})
+app.use(bodyParser.urlencoded({ extended: false }));
+
+app.get('/', (req, res) => {
+    let json = {health:true};
+    res.send(json);
+});
 
 app.get('/notes', (req, res) => {
-    db.getNotes().then(data => {
-        res.send(data)
-    }).catch(err => {
-        res.status(500).send(err)
-    })
-})
+    const { title } = req.query;
+    if(title) {
+        db.getNotesByTitle(title)
+            .then(data => {
+                res.send(data);
+            })
+            .catch(error => {
+                res.status(500).send(error);
+            });
 
-app.get('/note/:id', (req, res) => {
-    const {id} = req.params
-    db.getNoteById(id).then(data => {
-        if (!data) {
-            res.status(404).send('there is no note with this id : ', id)
-        } else {
-            res.send(data)
-        }
+    } else {
+        db.getNotes()
+            .then(data => {
+                res.send(data);
+            })
+            .catch(error => {
+                res.status(500).send(error);
+            })
+    }
+});
 
-    }).catch(err => {
-        res.status(500).send(err)
-    })
-})
+app.post('/notes', (req, res) => {
+    db.addNote(req.body)
+        .then(data => {
+            res.send(data);
+        })
+        .catch(error => {
+            res.status(500).send(error);
+        })
+});
+
+app.get('/notes/:id', (req, res) => {
+    const { id } = req.params;
+    db.getNoteById(id)
+        .then(data => {
+            if(!data) {
+                res.status(404).send(`Note with id ${id} doesn't exist`);
+            } else {
+                res.send(data);
+            }
+        })
+        .catch(error => {
+            res.status(500).send(error);
+        })
+});
+
 app.put('/notes', (req, res) => {
-    db.updateNote(req.body).then(data => {
-        if (!data) {
-            res.status(404).send('there is no note with this id : ')
-        } else {
-            res.send(data)
-        }
+    db.updateNote(req.body)
+        .then(data => {
+            if(!data) {
+                res.status(404).send(`Note doesn't exist`);
+            } else {
+                res.send(data);
+            }
+        })
+        .catch(error => {
+            res.status(500).send(error);
+        });
+});
 
-    }).catch(err => {
-        res.status(500).send(err)
-    })
-})
+app.delete('/notes/:id', (req, res) => {
+    const { id } = req.params;
+    db.deleteNote(id)
+        .then(data => {
+            res.send(data);
+        })
+        .catch(error => {
+            res.status(500).send(error);
+        })
+});
 
-app.delete('/note/:id', (req, res) => {
-    const {id} = req.params
-    db.deleteNote(id).then(data => {
-        if (!data) {
-            res.status(404).send('there is no note with this id : ', id)
-        } else {
-            res.send(data)
-        }
-
-    }).catch(err => {
-        res.status(500).send(err)
-    })
-})
-const port = 3000
 app.listen(port, () => {
-    console.log(`the server has started on port : ${port}`)
-    db.connect()
-})
+    console.log(`Started node server and listening to port ${port}`);
+    db.connect();
+});
