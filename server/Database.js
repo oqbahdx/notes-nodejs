@@ -3,10 +3,11 @@ const Note = require("./schemas/note");
 
 class Database {
     constructor() {
-        this.Url = "mongodb://localhost:27017/notaty";
+        this.Url = "mongodb://127.0.0.1:27017/notes";
     }
 
     connect() {
+        mongoose.set("strictQuery",true);
         mongoose
             .connect(this.Url, { useNewUrlParser: true, useUnifiedTopology: true })
             .then(() => {
